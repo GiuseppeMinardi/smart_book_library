@@ -1,0 +1,41 @@
+services:
+  books_db:
+    # Change this line from postgres:latest to the pgvector image
+    image: pgvector/pgvector:pg16 
+    container_name: library-db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_DB: appdb
+    volumes:
+      - bookdatabase:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+  # 2. THE API
+  db_api:
+    build: ./api
+    container_name: books-api
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./api/.env
+    volumes:
+      - ./api:/app
+    # NEW: Use the --reload flag for Uvicorn/FastAPI
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  agentic_calls:
+    build: ./agents
+    container_name: books-agents
+    restart: always
+    ports:
+      - "8001:8000"
+    env_file:
+      - ./agents/.env
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  bookdatabase:

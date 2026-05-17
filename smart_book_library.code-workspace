@@ -1,0 +1,38 @@
+{
+	"folders": [
+		{
+			"name": "Root",
+			"path": "."
+		},
+		{
+			"name": "API",
+			"path": "api"
+		},
+		{
+			"name": "Agents",
+			"path": "agents"
+		},
+		{
+			"name": "Frontend",
+			"path": "frontend"
+		}
+	],
+	"settings": {
+		"powershell.cwd": "API"
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": []
+	},
+	// --- Per-Folder Scoped Settings ---
+	"settings.api": {
+		"python.defaultInterpreterPath": "${workspaceFolder:API}/.venv/bin/python"
+	},
+	"settings.agents": {
+		"python.defaultInterpreterPath": "${workspaceFolder:Agents}/.venv/bin/python"
+	},
+	"settings.frontend": {
+		// If frontend is Python-based (e.g., Streamlit, Reflex):
+		"python.defaultInterpreterPath": "${workspaceFolder:Frontend}/.venv/bin/python"
+	}
+}
