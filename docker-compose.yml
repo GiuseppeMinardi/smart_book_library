@@ -4,10 +4,8 @@ services:
     image: pgvector/pgvector:pg16 
     container_name: library-db
     restart: always
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: secretpassword
-      POSTGRES_DB: appdb
+    env_file:
+      - ./db/.env
     volumes:
       - bookdatabase:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -22,6 +20,8 @@ services:
       - "8000:8000"
     env_file:
       - ./api/.env
+    environment:
+      - AGENTIC_API_URL=http://agentic_calls:8000
     volumes:
       - ./api:/app
     # NEW: Use the --reload flag for Uvicorn/FastAPI
