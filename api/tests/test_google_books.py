@@ -25,12 +25,15 @@ def test_get_book_info_from_isbn_raises_without_api_key(monkeypatch):
 def test_get_book_info_from_isbn_raises_for_non_200_response(monkeypatch):
     monkeypatch.setattr(google_books, "_GOOGLE_BOOKS_API_KEY", "fake-key")
 
-    def fake_get(url):
+    def fake_get(url, *args, **kwargs):
         return FakeResponse(404, {"error": {"message": "Not found"}}, text="Not found")
 
     monkeypatch.setattr(google_books.requests, "get", fake_get)
 
-    with pytest.raises(ValueError, match="Failed to fetch book info from Google Books API"):
+    with pytest.raises(
+        google_books.GoogleBooksServiceError,
+        match="Failed to fetch book info from Google Books API",
+    ):
         asyncio.run(google_books.get_book_info_from_isbn(isbn="9780306406157"))
 
 
@@ -51,7 +54,7 @@ def test_get_book_info_from_isbn_returns_full_response(monkeypatch):
         ],
     }
 
-    def fake_get(url):
+    def fake_get(url, *args, **kwargs):
         assert "q=isbn:9780306406157" in url
         assert "key=fake-key" in url
         return FakeResponse(200, expected_json, text=str(expected_json))
@@ -100,7 +103,7 @@ def test_get_book_info_from_isbn_returns_slim_response(monkeypatch):
         ],
     }
 
-    def fake_get(url):
+    def fake_get(url, *args, **kwargs):
         return FakeResponse(200, expected_json, text=str(expected_json))
 
     monkeypatch.setattr(google_books.requests, "get", fake_get)
@@ -128,7 +131,7 @@ def test_get_book_info_from_isbn_raises_when_items_is_empty(monkeypatch):
         "items": [],
     }
 
-    def fake_get(url):
+    def fake_get(url, *args, **kwargs):
         return FakeResponse(200, expected_json, text=str(expected_json))
 
     monkeypatch.setattr(google_books.requests, "get", fake_get)

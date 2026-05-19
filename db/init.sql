@@ -56,7 +56,7 @@ CREATE TABLE book_categories (
 CREATE TABLE book_embeddings (
     book_id INTEGER REFERENCES books(id) ON DELETE CASCADE,
     model_name TEXT,
-    vector VECTOR(1536), 
+    vector VECTOR(768), 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (book_id, model_name)
 );
@@ -64,7 +64,7 @@ CREATE TABLE book_embeddings (
 CREATE TABLE author_embeddings (
     author_id INTEGER REFERENCES authors(id) ON DELETE CASCADE,
     model_name TEXT,
-    vector VECTOR(1536), 
+    vector VECTOR(768), 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (author_id, model_name)
 );

@@ -16,6 +16,11 @@ _author_info_prompt = _prompts_folder.joinpath("author_info.txt").read_text(enco
 _book_description_prompt = _prompts_folder.joinpath("book_description.txt").read_text(encoding="utf-8")
 try:
     _model_settings: ModelSettings = settings
+    print("✅ Model configuration loaded successfully:")
+    print(f"   Provider: {_model_settings.provider}")
+    print(f"   Model Name: {_model_settings.model_name}")
+    if _model_settings.base_url:
+        print(f"   Base URL: {_model_settings.base_url}")
 except ValidationError as e:
     print("\n❌ CRITICAL: Configuration Error!")
     print(e)  # This will print exactly which field is missing or invalid

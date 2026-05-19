@@ -6,6 +6,11 @@ import requests
 from .logger import logger
 from .models import ISBN, GoogleBookSlimResponse, GoogleBooksResponse
 
+
+class GoogleBooksServiceError(Exception):
+    """Raised when Google Books API returns an unexpected response."""
+
+
 _GOOGLE_BOOKS_API_URL = os.getenv(
     "GOOGLE_BOOKS_API_URL", "https://www.googleapis.com/books/v1/volumes"
 )
@@ -30,10 +35,30 @@ async def get_book_info_from_isbn(
         f"{google_books_api_url}?q=isbn:{str(isbn)}&key={google_books_api_key}"
     )
 
+    def _get_proxy_dict() -> dict[str, str]:
+        proxies: dict[str, str] = {}
+        values = {
+            "http": os.getenv("HTTP_PROXY") or os.getenv("http_proxy"),
+            "https": os.getenv("HTTPS_PROXY") or os.getenv("https_proxy"),
+            "all": os.getenv("ALL_PROXY") or os.getenv("all_proxy"),
+        }
+        for key, value in values.items():
+            if value:
+                proxies[key] = value
+        return proxies
+
     logger.debug(
         f"Fetching book info from Google Books API for ISBN {isbn} using URL: {get_book_url}"
     )
-    response: requests.Response = await asyncio.to_thread(requests.get, get_book_url)
+    proxies = _get_proxy_dict()
+    if proxies:
+        response: requests.Response = await asyncio.to_thread(
+            requests.get, get_book_url, proxies=proxies, timeout=30
+        )
+    else:
+        response: requests.Response = await asyncio.to_thread(
+            requests.get, get_book_url, timeout=30
+        )
     logger.debug(
         f"Received response from Google Books API for ISBN {isbn}: {response.status_code} - {response.text[:200]}..."
     )  # Log status code and first 200 chars of response text
@@ -42,7 +67,7 @@ async def get_book_info_from_isbn(
         logger.error(
             f"Failed to fetch book info from Google Books API: {response.status_code} - {response.text}"
         )
-        raise ValueError(
+        raise GoogleBooksServiceError(
             f"Failed to fetch book info from Google Books API: {response.status_code} - {response.text}"
         )
 

@@ -45,14 +45,16 @@ class ModelSettings(BaseSettings):
         """
         # Unmask the SecretStr to a raw string for the SDKs
         key_str = self.api_key.get_secret_value() if self.api_key else None
+        print(
+            f"Initializing model with provider '{self.provider}' and model name '{self.model_name}'"
+        )
 
         if self.provider == "openai":
+            print("Using OpenAI provider with model:", self.model_name)
             from pydantic_ai.models.openai import OpenAIChatModel
             from pydantic_ai.providers.openai import OpenAIProvider
-            
+
             provider_kwargs = {"api_key": key_str}
-            if self.base_url:
-                provider_kwargs["base_url"] = self.base_url
                 
             return OpenAIChatModel(
                 self.model_name, 
@@ -60,12 +62,11 @@ class ModelSettings(BaseSettings):
             )
 
         elif self.provider == "anthropic":
+            print("Using Anthropic provider with model:", self.model_name)
             from pydantic_ai.models.anthropic import AnthropicModel
             from pydantic_ai.providers.anthropic import AnthropicProvider
-            
+
             provider_kwargs = {"api_key": key_str}
-            if self.base_url:
-                provider_kwargs["base_url"] = self.base_url
                 
             return AnthropicModel(
                 self.model_name, 

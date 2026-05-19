@@ -26,6 +26,10 @@ services:
       - ./api/.env
     environment:
       - AGENTIC_API_URL=http://agentic_calls:8000
+      - HTTP_PROXY
+      - HTTPS_PROXY
+      - NO_PROXY
+      - ALL_PROXY
     volumes:
       - ./api:/app
     # NEW: Use the --reload flag for Uvicorn/FastAPI
@@ -41,9 +45,33 @@ services:
       - "8001:8000"
     environment:
       - BASE_URL=http://ollama:11434
+      - HTTP_PROXY
+      - HTTPS_PROXY
+      - NO_PROXY
+      - ALL_PROXY
     env_file:
       - ./agents/.env
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build: ./frontend
+    container_name: books-frontend
+    restart: always
+    depends_on:
+      - books_db
+      - agentic_calls
+    ports:
+      - "8501:8501"
+    environment:
+      - DB_HOST=books_db
+      - DB_PORT=5432
+      - DB_USER=admin
+      - DB_PASSWORD=secretpassword
+      - DB_NAME=appdb
+      - AGENTIC_API_URL=http://agentic_calls:8000
+    volumes:
+      - ./frontend:/app
+    command: streamlit run main.py --server.port 8501 --server.address 0.0.0.0
 
   # FIXED: Indentation aligned with other services
   ollama:

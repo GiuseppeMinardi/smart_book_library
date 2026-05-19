@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class IndustryIdentifier(BaseModel):
@@ -45,7 +45,10 @@ class VolumeInfo(BaseModel):
         description="Industry standard identifiers like ISBN.",
     )
     page_count: Optional[int] = Field(
-        None, alias="pageCount", description="Total number of pages in the book."
+        None,
+        alias="pageCount",
+        description="Total number of pages in the book.",
+        gt=0,
     )
     print_type: Optional[str] = Field(
         None,
@@ -72,6 +75,13 @@ class VolumeInfo(BaseModel):
     info_link: Optional[str] = Field(
         None, alias="infoLink", description="URL for additional book information."
     )
+
+    @field_validator("page_count", mode="before")
+    @classmethod
+    def validate_page_count(cls, v):
+        if v is not None and v <= 0:
+            return None  # Treat non-positive page counts as None
+        return v
 
 
 class GoogleBooksResponse(BaseModel):
