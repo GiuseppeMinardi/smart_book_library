@@ -1,5 +1,6 @@
 from typing import Any, Literal, Optional
 
+from fastmcp import settings
 from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -88,3 +89,6 @@ class ModelSettings(BaseSettings):
                 self.model_name, 
                 provider=OllamaProvider(base_url=self.base_url)
             )
+
+
+settings = ModelSettings()

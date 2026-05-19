@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from agents import get_agent
+from agents.embeddings import generate_embedding
 from agents.output_models import AuthorInfo
 
 app = FastAPI()
@@ -22,6 +23,10 @@ async def get_book_description(book_title: str) -> str:
     result = await book_description_model.run(book_title)
     return result.output
 
+@app.get("/embedding")
+async def get_embedding(text: str, model_name: str = "nomic-embed-text") -> list[float]:
+    embedding = await generate_embedding(text, model_name)
+    return embedding
 
 @app.get("/")
 async def root():

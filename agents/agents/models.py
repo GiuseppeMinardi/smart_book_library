@@ -6,14 +6,16 @@ from pydantic import ValidationError
 from pydantic_ai import Agent
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 
-from .configuration import ModelSettings
+from agents.configuration import ModelSettings
+
+from .configuration import settings
 from .output_models import AuthorInfo
 
 _prompts_folder = Path(__file__).parent / "prompts"
 _author_info_prompt = _prompts_folder.joinpath("author_info.txt").read_text(encoding="utf-8")
 _book_description_prompt = _prompts_folder.joinpath("book_description.txt").read_text(encoding="utf-8")
 try:
-    _model_settings = ModelSettings()
+    _model_settings: ModelSettings = settings
 except ValidationError as e:
     print("\n❌ CRITICAL: Configuration Error!")
     print(e)  # This will print exactly which field is missing or invalid
