@@ -87,8 +87,7 @@ class ModelSettings(BaseSettings):
             from pydantic_ai.providers.ollama import OllamaProvider
             
             return OllamaModel(
-                self.model_name, 
-                provider=OllamaProvider(base_url=self.base_url)
+                self.model_name, provider=OllamaProvider(base_url=self.base_url + "/v1")
             )
 
 

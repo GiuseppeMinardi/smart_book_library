@@ -44,7 +44,7 @@ services:
     ports:
       - "8001:8000"
     environment:
-      - BASE_URL=http://ollama:11434/v1
+      - BASE_URL=http://ollama:11434
       - HTTP_PROXY
       - HTTPS_PROXY
       - NO_PROXY

@@ -13,7 +13,6 @@ import psycopg
 import streamlit as st
 from psycopg.rows import dict_row
 
-
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 logger = logging.getLogger("frontend")
 

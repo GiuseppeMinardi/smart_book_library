@@ -8,7 +8,6 @@ ENV OLLAMA_MODELS=/models
 RUN ollama serve & \
     sleep 5 && \
     echo "Pulling small language model..." && \
-    ollama pull llama3.2:1b && \
     ollama pull qwen3.5:4b && \
     echo "Pulling embedding model..." && \
     ollama pull nomic-embed-text

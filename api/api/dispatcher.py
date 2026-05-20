@@ -1,7 +1,7 @@
 import asyncio
 import inspect
 import os
-from typing import Any
+from typing import Any, Optional
 
 import httpx
 
@@ -51,8 +51,13 @@ async def _fetch_from_agentic(endpoint: str, params: dict[str, str]) -> Any:
             ) from exc
 
 
-async def get_book_description_from_agentic(book_title: str) -> str:
-    return await _fetch_from_agentic("book-description", {"book_title": book_title})
+async def get_book_description_from_agentic(
+    book_title: str, author_name: Optional[str] = None
+) -> str:
+    params = {"book_title": book_title}
+    if author_name:
+        params = {"book_title": book_title + "by " + author_name}
+    return await _fetch_from_agentic("book-description", params)
 
 
 async def get_author_info_from_agentic(author_name: str) -> dict[str, Any]:
