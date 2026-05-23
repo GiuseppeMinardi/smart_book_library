@@ -145,3 +145,29 @@ def test_get_book_info_from_isbn_raises_when_items_is_empty(monkeypatch):
                 google_books_api_key="fake-key",
             )
         )
+
+
+def test_get_book_info_from_isbn_raises_when_total_items_is_zero_without_items_key(
+    monkeypatch,
+):
+    monkeypatch.setattr(google_books, "_GOOGLE_BOOKS_API_KEY", "fake-key")
+
+    expected_json = {
+        "kind": "books#volumes",
+        "totalItems": 0,
+    }
+
+    def fake_get(url, *args, **kwargs):
+        return FakeResponse(200, expected_json, text=str(expected_json))
+
+    monkeypatch.setattr(google_books.requests, "get", fake_get)
+
+    with pytest.raises(ValueError, match="No books found for the provided ISBN"):
+        asyncio.run(
+            google_books.get_book_info_from_isbn(
+                isbn="9780306406157",
+                flatten_response=True,
+                google_books_api_url="https://example.com",
+                google_books_api_key="fake-key",
+            )
+        )

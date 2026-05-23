@@ -72,10 +72,13 @@ async def get_book_info_from_isbn(
         )
 
     response_json = response.json()
-    if isinstance(response_json, dict) and response_json.get("items") is not None:
-        if not response_json["items"]:
+    if isinstance(response_json, dict):
+        if response_json.get("totalItems", 0) == 0:
             raise ValueError("No books found for the provided ISBN")
-        response_json = response_json["items"][0]
+        if response_json.get("items") is not None:
+            if not response_json["items"]:
+                raise ValueError("No books found for the provided ISBN")
+            response_json = response_json["items"][0]
 
     full_response = GoogleBooksResponse.model_validate(response_json)
 
