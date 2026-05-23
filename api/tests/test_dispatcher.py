@@ -1,6 +1,8 @@
+import asyncio
+
 from fastapi.testclient import TestClient
 
-from api.dispatcher import AgenticServiceError
+from api.dispatcher import AgenticServiceError, get_book_description_from_agentic
 from api.models.google_responses import GoogleBookSlimResponse
 from main import app
 
@@ -281,3 +283,20 @@ def test_ingest_existing_book_returns_cached_record(monkeypatch):
     response = client.post("/books/ingest", json={"isbn": "9780306406157"})
     assert response.status_code == 200
     assert response.json() == existing_book
+
+
+def test_get_book_description_from_agentic_with_author_name(monkeypatch):
+    captured: dict[str, dict[str, str]] = {}
+
+    async def fake_fetch(endpoint, params):
+        captured["endpoint"] = endpoint
+        captured["params"] = params
+        return "Generated description"
+
+    monkeypatch.setattr("api.dispatcher._fetch_from_agentic", fake_fetch)
+
+    result = asyncio.run(get_book_description_from_agentic("Example Book", "Jane Doe"))
+
+    assert result == "Generated description"
+    assert captured["endpoint"] == "book-description"
+    assert captured["params"] == {"book_title": "Example Book by Jane Doe"}

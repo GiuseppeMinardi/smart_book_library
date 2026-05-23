@@ -56,7 +56,7 @@ async def get_book_description_from_agentic(
 ) -> str:
     params = {"book_title": book_title}
     if author_name:
-        params = {"book_title": book_title + "by " + author_name}
+        params = {"book_title": f"{book_title} by {author_name}"}
     return await _fetch_from_agentic("book-description", params)
 
 

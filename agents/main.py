@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+import urllib.parse
+
+from fastapi import FastAPI, HTTPException
 
 from agents import get_agent
 from agents.embeddings import generate_embedding
@@ -7,25 +9,44 @@ from agents.output_models import AuthorInfo
 app = FastAPI()
 
 
+def _normalize_query_value(value: str) -> str:
+    if "%" in value or "+" in value:
+        try:
+            return urllib.parse.unquote_plus(value)
+        except Exception:
+            return value
+    return value
+
+
+async def _run_agent_safely(agent_name: str, argument: str):
+    agent = get_agent(agent_name)
+    try:
+        return await agent.run(argument)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Agent '{agent_name}' failed for input '{argument}': {exc}",
+        ) from exc
+
+
 @app.get("/author-info")
 async def get_author_info(author_name: str) -> AuthorInfo:
-    # 1. Await the run to get the AgentRunResult object
-    # 2. Return the .output attribute which contains the actual AuthorInfo object
-    author_info_model = get_agent("author_info")
-    result = await author_info_model.run(author_name)
+    normalized_name = _normalize_query_value(author_name)
+    result = await _run_agent_safely("author_info", normalized_name)
     return result.output
 
 
 @app.get("/book-description")
 async def get_book_description(book_title: str) -> str:
-    # Extract .output to get the raw string
-    book_description_model = get_agent("book_description")
-    result = await book_description_model.run(book_title)
+    normalized_title = _normalize_query_value(book_title)
+    result = await _run_agent_safely("book_description", normalized_title)
     return result.output
+
 
 @app.get("/embedding")
 async def get_embedding(text: str, model_name: str = "nomic-embed-text") -> list[float]:
-    embedding = await generate_embedding(text, model_name)
+    normalized_text = _normalize_query_value(text)
+    embedding = await generate_embedding(normalized_text, model_name)
     return embedding
 
 @app.get("/")
