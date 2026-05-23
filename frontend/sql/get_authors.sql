@@ -1,5 +1,4 @@
 SELECT
-    a.id AS author_id,
     a.name,
     a.birth_date,
     a.death_date,

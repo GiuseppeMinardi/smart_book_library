@@ -7,11 +7,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml .
+# If you have a README or other files required by pyproject.toml, copy them too, or just:
+COPY . . 
 
 RUN python -m pip install --upgrade pip \
-    && pip install streamlit plotly pandas httpx psycopg[binary]
-
-COPY . .
+    && pip install .
 
 EXPOSE 8501
 

@@ -300,3 +300,38 @@ def test_get_book_description_from_agentic_with_author_name(monkeypatch):
     assert result == "Generated description"
     assert captured["endpoint"] == "book-description"
     assert captured["params"] == {"book_title": "Example Book by Jane Doe"}
+
+
+def test_vector_similarity_endpoint(monkeypatch):
+    async def fake_embedding(text, model_name="nomic-embed-text"):
+        return [0.1, 0.2, 0.3]
+
+    monkeypatch.setattr("api.dispatcher.get_embedding_from_agentic", fake_embedding)
+    monkeypatch.setattr(
+        "api.dispatcher.query_similar_embeddings",
+        lambda vector_table, model_name, query_embedding, limit=10: [
+            {
+                "id": 1,
+                "model_name": model_name,
+                "distance": 0.1,
+                "similarity": 0.9,
+                "title": "Example Book",
+                "isbn": "9780306406157",
+            }
+        ],
+    )
+
+    response = client.post(
+        "/vector-similarity",
+        json={
+            "text": "Find similar books",
+            "vector_table": "book_embeddings",
+            "model_name": "nomic-embed-text",
+            "limit": 1,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["vector_table"] == "book_embeddings"
+    assert response.json()["results"][0]["id"] == 1
+    assert response.json()["results"][0]["title"] == "Example Book"

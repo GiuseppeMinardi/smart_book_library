@@ -232,6 +232,71 @@ def get_author_embedding(
         return cur.fetchone()
 
 
+def query_similar_embeddings(
+    vector_table: str,
+    model_name: str,
+    query_embedding: list[float],
+    limit: int = 10,
+) -> list[dict[str, Any]]:
+    allowed_tables = {
+        "book_embeddings": {
+            "alias": "be",
+            "id_field": "book_id",
+            "join": "JOIN books b ON b.id = be.book_id",
+            "metadata": "b.title AS title, b.isbn AS isbn",
+        },
+        "author_embeddings": {
+            "alias": "ae",
+            "id_field": "author_id",
+            "join": "JOIN authors a ON a.id = ae.author_id",
+            "metadata": "a.name AS name",
+        },
+    }
+
+    if vector_table not in allowed_tables:
+        raise ValueError(
+            f"Unsupported vector table: {vector_table}. Supported tables: {', '.join(allowed_tables)}"
+        )
+
+    table_info = allowed_tables[vector_table]
+    alias = table_info["alias"]
+    distance_sql = f"{alias}.vector <=> %s"
+    query = f"""
+        SELECT {alias}.{table_info["id_field"]} AS id,
+               {alias}.model_name,
+               {table_info["metadata"]},
+               {distance_sql} AS distance
+        FROM {vector_table} AS {alias}
+        {table_info["join"]}
+        WHERE {alias}.model_name = %s
+        ORDER BY {distance_sql}
+        LIMIT %s
+        """
+
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query, (query_embedding, model_name, limit))
+            rows = cur.fetchall()
+
+    results: list[dict[str, Any]] = []
+    for row in rows:
+        similarity = 1.0 - float(row["distance"])
+        result = {
+            "id": row["id"],
+            "model_name": row["model_name"],
+            "distance": float(row["distance"]),
+            "similarity": similarity,
+        }
+        if vector_table == "book_embeddings":
+            result["title"] = row["title"]
+            result["isbn"] = row["isbn"]
+        else:
+            result["name"] = row["name"]
+        results.append(result)
+
+    return results
+
+
 def save_book_embedding(
     book_id: int,
     embedding: list[float],

@@ -10,6 +10,7 @@ from api.db import (
     get_author_embedding,
     get_book_by_isbn,
     get_db_connection,
+    query_similar_embeddings,
     save_author_embedding,
     save_author_record,
     save_book_embedding,
@@ -69,6 +70,22 @@ async def get_embedding_from_agentic(
 ) -> list[float]:
     return await _fetch_from_agentic(
         "embedding", {"text": text, "model_name": model_name}
+    )
+
+
+async def get_similar_vectors(
+    text: str,
+    vector_table: str,
+    model_name: str = EMBEDDING_MODEL_NAME,
+    limit: int = 10,
+) -> list[dict[str, Any]]:
+    embedding = await get_embedding_from_agentic(text, model_name)
+    return await asyncio.to_thread(
+        query_similar_embeddings,
+        vector_table,
+        model_name,
+        embedding,
+        limit,
     )
 
 

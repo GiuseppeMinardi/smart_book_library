@@ -11,3 +11,8 @@ dependencies = [
     "psycopg[binary]>=3.3.4",
     "streamlit>=1.57.0",
 ]
+
+[dependency-groups]
+dev = [
+    "python-dotenv>=1.2.2",
+]

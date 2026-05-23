@@ -71,7 +71,7 @@ services:
       - AGENTIC_API_URL=http://agentic_calls:8000
     volumes:
       - ./frontend:/app
-    command: streamlit run main.py --server.port 8501 --server.address 0.0.0.0
+    command: streamlit run main.py --server.port 8501 --server.address 0.0.0.0 --server.headless true --server.enableCORS false --server.enableXsrfProtection false
 
   # FIXED: Indentation aligned with other services
   ollama:

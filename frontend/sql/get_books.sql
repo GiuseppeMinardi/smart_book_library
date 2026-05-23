@@ -1,15 +1,10 @@
 SELECT
-    b.id AS book_id,
+    b.isbn,
     b.title,
-    b.publisher,
-    b.published_date,
+    CAST(SUBSTRING(b.published_date, 1, 4) AS INTEGER) AS publishing_year,
     b.description,
     b.page_count,
-    b.print_type,
     b.language,
-    b.info_link,
-    b.small_thumbnail,
-    b.isbn,
     COALESCE(json_agg(DISTINCT a.name) FILTER (WHERE a.name IS NOT NULL), '[]') AS authors,
     COALESCE(json_agg(DISTINCT c.name) FILTER (WHERE c.name IS NOT NULL), '[]') AS categories
 FROM books b
