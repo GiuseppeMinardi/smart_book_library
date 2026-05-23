@@ -132,8 +132,84 @@ def run_search(
 
 def render_overview(books_df: pd.DataFrame, authors_df: pd.DataFrame) -> None:
     st.header("Library Overview")
-    st.metric("Books in catalog", len(books_df))
-    st.metric("Authors in catalog", len(authors_df))
+    left, right = st.columns(2)
+    left.metric("Books in catalog", len(books_df))
+    right.metric("Authors in catalog", len(authors_df))
+
+    categories = books_df["categories"].apply(lambda value: value if isinstance(value, list) else [])
+    category_counts = (
+        pd.Series([category for categories_list in categories for category in categories_list], name="category")
+        .value_counts()
+        .reset_index(name="count")
+        .rename(columns={"index": "category"})
+    )
+
+    publisher_counts = (
+        books_df["publisher"].fillna("Unknown")
+        .value_counts()
+        .head(10)
+        .reset_index(name="count")
+        .rename(columns={"index": "publisher"})
+    )
+
+    nationality_counts = (
+        authors_df["nationality"].fillna("Unknown")
+        .value_counts()
+        .head(10)
+        .reset_index(name="count")
+        .rename(columns={"index": "nationality"})
+    )
+
+    col1, col2 = st.columns(2)
+    if not category_counts.empty:
+        category_fig = px.bar(
+            category_counts.head(10),
+            x="count",
+            y="category",
+            orientation="h",
+            title="Top Book Categories",
+            labels={"count": "Number of books", "category": "Category"},
+            color="count",
+            color_continuous_scale="Blues",
+        )
+        category_fig.update_layout(yaxis={"categoryorder": "total ascending"}, margin=dict(l=120, r=20, t=40, b=20))
+        col1.plotly_chart(category_fig, use_container_width=True)
+    else:
+        col1.info("No category data available.")
+
+    if not nationality_counts.empty:
+        nationality_fig = px.bar(
+            nationality_counts,
+            x="count",
+            y="nationality",
+            orientation="h",
+            title="Top Author Nationalities",
+            labels={"count": "Number of authors", "nationality": "Nationality"},
+            color="count",
+            color_continuous_scale="Teal",
+        )
+        nationality_fig.update_layout(yaxis={"categoryorder": "total ascending"}, margin=dict(l=120, r=20, t=40, b=20))
+        col2.plotly_chart(nationality_fig, use_container_width=True)
+    else:
+        col2.info("No author nationality data available.")
+
+    st.markdown("### Publisher distribution")
+    if not publisher_counts.empty:
+        publisher_fig = px.bar(
+            publisher_counts,
+            x="count",
+            y="publisher",
+            orientation="h",
+            title="Top Publishers by Book Count",
+            labels={"count": "Number of books", "publisher": "Publisher"},
+            color="count",
+            color_continuous_scale="Purples",
+        )
+        publisher_fig.update_layout(yaxis={"categoryorder": "total ascending"}, margin=dict(l=120, r=20, t=40, b=20))
+        st.plotly_chart(publisher_fig, use_container_width=True)
+    else:
+        st.info("No publisher distribution data available.")
+
     st.markdown("### Recent books")
     st.dataframe(books_df[["title", "authors", "categories", "isbn"]].head(10), use_container_width=True)
     st.markdown("### Authors")
@@ -164,18 +240,20 @@ def render_embeddings_view(embeddings: pd.DataFrame, entity_name: str) -> None:
     st.markdown(
         "These values represent cosine similarity between embedding vectors. High values indicate stronger semantic closeness."
     )
-    st.plotly_chart(
-        px.imshow(
-            matrix_df,
-            labels={"x": entity_name, "y": entity_name, "color": "Similarity"},
-            x=matrix_df.columns,
-            y=matrix_df.index,
-            color_continuous_scale="Viridis",
-            zmin=0,
-            zmax=1,
-        ),
-        use_container_width=True,
+
+    fig = px.imshow(
+        matrix_df,
+        labels={"x": entity_name, "y": entity_name, "color": "Similarity"},
+        x=matrix_df.columns,
+        y=matrix_df.index,
+        color_continuous_scale="Viridis",
+        zmin=0,
+        zmax=1,
+        aspect="auto",
     )
+    fig.update_layout(title=f"{entity_name} similarity heatmap", xaxis={"side": "top"}, margin=dict(l=40, r=40, t=50, b=40))
+    fig.update_traces(hovertemplate="%{x}<br>%{y}<br>Similarity: %{z:.3f}")
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def render_search_page(
@@ -226,6 +304,20 @@ def render_search_page(
             right_on=[key_column],
             how="left",
         )
+        merged = merged.assign(item_label=merged[label_column].fillna("Unknown"))
+        score_fig = px.bar(
+            merged.sort_values("score"),
+            x="score",
+            y="item_label",
+            orientation="h",
+            title=f"Top {entity} similarity scores",
+            labels={"score": "Similarity", "item_label": entity[:-1]},
+            color="score",
+            color_continuous_scale="Viridis",
+        )
+        score_fig.update_layout(yaxis={"categoryorder": "total ascending"}, margin=dict(l=140, r=20, t=50, b=20))
+        st.plotly_chart(score_fig, use_container_width=True)
+
         st.markdown("### Top similar items")
         st.dataframe(
             merged[[label_column, "model_name", "score"]].rename(columns={label_column: entity[:-1]}),
