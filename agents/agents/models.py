@@ -10,6 +10,10 @@ from agents.configuration import ModelSettings
 
 from .configuration import settings
 from .output_models import AuthorInfo
+from .telemetry import setup_phoenix_tracing
+
+setup_phoenix_tracing()
+Agent.instrument_all()
 
 _prompts_folder = Path(__file__).parent / "prompts"
 _author_info_prompt = _prompts_folder.joinpath("author_info.txt").read_text(encoding="utf-8")
