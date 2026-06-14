@@ -37,14 +37,14 @@ def get_agent(agent_type: Literal["author_info", "book_description", "health"]) 
             return Agent(
                 model=_ai_model,
                 system_prompt=_author_info_prompt,
-                tools=[duckduckgo_search_tool()],
+                tools=[duckduckgo_search_tool(max_results=5)],
                 output_type=AuthorInfo,
             )
         case "book_description":
             return Agent(
                 model=_ai_model,
                 system_prompt=_book_description_prompt,
-                tools=[duckduckgo_search_tool()],
+                tools=[duckduckgo_search_tool(max_results=5)],
                 output_type=str,
             )
         case "health":

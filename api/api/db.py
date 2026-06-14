@@ -1,4 +1,6 @@
 import os
+import re
+from datetime import date, datetime
 from typing import Any
 
 from psycopg import connect
@@ -23,6 +25,42 @@ def get_database_url() -> str:
 
 def get_db_connection():
     return connect(get_database_url(), autocommit=False, row_factory=dict_row)
+
+
+def _normalize_author_date(value: Any) -> date | None:
+    if value is None:
+        return None
+
+    if isinstance(value, date) and not isinstance(value, datetime):
+        return value
+
+    if isinstance(value, datetime):
+        return value.date()
+
+    if isinstance(value, str):
+        value = value.strip()
+        if value == "":
+            return None
+
+        if re.match(r"^\d{4}-\d{2}-\d{2}$", value):
+            try:
+                return date.fromisoformat(value)
+            except ValueError:
+                return None
+
+        if re.match(r"^\d{4}-\d{2}$", value):
+            try:
+                return date.fromisoformat(f"{value}-01")
+            except ValueError:
+                return None
+
+        if re.match(r"^\d{4}$", value):
+            try:
+                return date.fromisoformat(f"{value}-01-01")
+            except ValueError:
+                return None
+
+    return None
 
 
 def get_book_by_isbn(isbn: str) -> dict[str, Any] | None:
@@ -126,6 +164,9 @@ def save_author_record(author_info: dict[str, Any], conn=None) -> dict[str, Any]
     if not author_info.get("name"):
         raise ValueError("Author name is required")
 
+    birth_date = _normalize_author_date(author_info.get("birth_date"))
+    death_date = _normalize_author_date(author_info.get("death_date"))
+
     if conn is None:
         with get_db_connection() as conn:
             with conn.cursor() as cur:
@@ -146,8 +187,8 @@ def save_author_record(author_info: dict[str, Any], conn=None) -> dict[str, Any]
                     """,
                     (
                         author_info.get("name"),
-                        author_info.get("birth_date"),
-                        author_info.get("death_date"),
+                        birth_date,
+                        death_date,
                         author_info.get("nationality"),
                         author_info.get("sex"),
                         author_info.get("biography"),
@@ -184,8 +225,8 @@ def save_author_record(author_info: dict[str, Any], conn=None) -> dict[str, Any]
             """,
             (
                 author_info.get("name"),
-                author_info.get("birth_date"),
-                author_info.get("death_date"),
+                birth_date,
+                death_date,
                 author_info.get("nationality"),
                 author_info.get("sex"),
                 author_info.get("biography"),
