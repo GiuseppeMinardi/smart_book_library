@@ -97,21 +97,23 @@ services:
               count: 1
               capabilities: [gpu]
     
-  phoenix:
-    image: arizephoenix/phoenix:latest
-    container_name: arize-phoenix
-    depends_on:
-      - books_db # <-- NEW: Make sure Phoenix waits for the database
-    ports:
-      - "6006:6006" # UI and OTLP HTTP
-      - "4317:4317" # OTLP gRPC
-    environment:
-      # NEW: Connect Phoenix to PostgreSQL instead of local SQLite
-      - PHOENIX_SQL_DATABASE_URL=postgresql://admin:secretpassword@books_db:5432/appdb
-      - PHOENIX_WORKING_DIR=/phoenix/data
-    volumes:
-      # --- NEW: Mount the volume to the working directory ---
-      - phoenix_data:/phoenix/data
+    phoenix:
+      image: arizephoenix/phoenix:latest
+      container_name: arize-phoenix
+      depends_on:
+        books_db:
+          condition: service_healthy # Wait for Postgres to be fully ready
+      ports:
+        - "6006:6006" # UI and OTLP HTTP
+        - "4317:4317" # OTLP gRPC
+      environment:
+        # Tell Phoenix to use the Postgres database
+        - PHOENIX_SQL_DATABASE_URL=postgresql://admin:secretpassword@books_db:5432/appdb
+        # Optional: Set trace retention (0 = forever, or specify days to auto-cleanup)
+        - PHOENIX_DEFAULT_RETENTION_POLICY_DAYS=0
+      volumes:
+        # --- NEW: Mount the volume to the working directory ---
+        - phoenix_data:/phoenix/data
 
 volumes:
   bookdatabase:
